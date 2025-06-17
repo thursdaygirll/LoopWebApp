@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loop - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center"
+      style="background: url('{% static 'main/login-bg.png' %}') no-repeat center center/cover;">
+    <div class="bg-white rounded-[2.5rem] shadow-xl p-8 w-full max-w-md flex flex-col items-center"
+         style="box-shadow: 0 8px 24px 0 rgba(0,0,0,0.10);">
+        <h1 class="text-4xl font-bold text-blue-500 mb-2 mt-2">Loop</h1>
+        <p class="mb-6 text-center text-gray-500">Welcome back! Sign in with your information below.</p>
+        <form class="w-full flex flex-col gap-4">
+            <input type="email" placeholder="Email" class="p-3 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" />
+            <input type="password" placeholder="Password" class="p-3 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" />
+            <button class="bg-gray-100 shadow-lg rounded-xl py-3 text-xl font-semibold mt-2 transition hover:bg-gray-200">Login</button>
+        </form>
+        <a href="#" class="mt-4 text-gray-500 underline text-sm">Create an account</a>
+        <div class="flex items-center my-4 w-full">
+            <hr class="flex-grow border-gray-200" />
+            <span class="mx-2 text-gray-400 font-bold text-sm">OR</span>
+            <hr class="flex-grow border-gray-200" />
+        </div>
+        <button class="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 bg-white shadow-sm">
+            <img src="{% static 'main/googleicon.png' %}" alt="Google" class="w-6 h-6" />
+        </button>
+    </div>
+</body>
+</html>
