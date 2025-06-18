@@ -9,16 +9,18 @@
 <body class="min-h-screen bg-white">
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="bg-blue-200 w-32 flex flex-col items-center py-8 rounded-l-3xl">
-            <img src="{% static 'main/logo.png' %}" alt="Loop Logo" class="w-12 h-12 mb-8" />
-            <nav class="flex flex-col gap-8">
-                <a href="/dashboard/" class="text-white">
-                    <img src="{% static 'main/homeicon.png' %}" alt="Home" class="w-8 h-8" />
-                </a>
-                <a href="/profile/" class="text-white">
-                    <img src="{% static 'main/profileicon.png' %}" alt="Profile" class="w-8 h-8" />
-                </a>
-                <a href="/" class="text-white mt-auto">
+        <aside class="bg-[#08A6F7] w-32 flex flex-col items-center py-8 rounded-[2.5rem] m-4">
+            <h2 class="text-2xl font-bold text-white mb-12 tracking-wide">Loop</h2>
+            <nav class="flex flex-col h-full">
+                <div class="flex flex-col gap-20 mt-40">
+                    <a href="/dashboard/" class="text-white hover:opacity-80 transition">
+                        <img src="{% static 'main/homeicon.png' %}" alt="Home" class="w-10 h-10" />
+                    </a>
+                    <a href="/profile/" class="text-white hover:opacity-80 transition">
+                        <img src="{% static 'main/User.png' %}" alt="Profile" class="w-10 h-10" />
+                    </a>
+                </div>
+                <a href="/" class="text-white hover:opacity-80 transition mt-auto">
                     <img src="{% static 'main/logouticon.png' %}" alt="Logout" class="w-8 h-8" />
                 </a>
             </nav>
@@ -26,43 +28,58 @@
         <!-- Main Content -->
         <main class="flex-1 p-10">
             <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-blue-400">Hi, Susana!</h1>
+                <h1 class="text-2xl font-bold text-blue-400">Hi, Daniel!</h1>
                 <img src="{% static 'main/profileicon.png' %}" alt="Profile" class="w-12 h-12 rounded-full bg-blue-200" />
             </div>
             <div class="grid grid-cols-2 gap-8 mt-8">
                 <!-- Consistency Overview Chart Placeholder -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="font-bold mb-4">Consistency Overview</h2>
+                <div class="bg-white rounded-xl shadow p-6 h-96">
+                    <h2 class="text-2xl font-medium mb-4">Consistency Overview</h2>
                     <div id="consistency-chart" class="h-56 flex items-center justify-center text-gray-300">
                         <img src="{% static 'main/chart-placeholder.png' %}" alt="Chart Placeholder" class="h-40 opacity-30" />
                     </div>
                 </div>
                 <!-- Daily Progress Chart Placeholder -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="font-bold mb-4">Daily Progress</h2>
+                <div class="bg-white rounded-xl shadow p-6 h-96">
+                    <h2 class="text-2xl font-medium mb-4">Daily Progress</h2>
                     <div id="progress-chart" class="h-56 flex items-center justify-center text-gray-300">
                         <img src="{% static 'main/chart-placeholder.png' %}" alt="Chart Placeholder" class="h-40 opacity-30" />
                     </div>
                 </div>
             </div>
             <div class="mt-8">
-                <h2 class="font-bold mb-4">Analytics Overview</h2>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="bg-blue-100 rounded-lg p-4 text-center">
-                        <img src="{% static 'main/hygiene.png' %}" alt="Water" class="w-8 h-8 mx-auto mb-2" />
-                        60%<br/>More consistent
+                <h2 class="text-3xl font-normal mb-4">Analytics Overview</h2>
+                <div class="grid grid-cols-3 gap-5">
+                    <div class="bg-blue-100 rounded-2xl px-4 py-8 flex items-center gap-4">
+                        <div class="bg-white rounded-xl w-16 h-16 flex items-center justify-center shadow">
+                            <img src="{% static 'main/hygiene.png' %}" alt="Water" class="w-10 h-10" />
+                        </div>
+                        <div class="text-left">
+                            <span class="text-2xl font-bold text-[#08A6F7]">60%</span><br/>
+                            <span class="text-base text-[#08A6F7]">More consistent</span>
+                        </div>
                     </div>
-                    <div class="bg-yellow-100 rounded-lg p-4 text-center">
-                        <img src="{% static 'main/health.png' %}" alt="Medicine" class="w-8 h-8 mx-auto mb-2" />
-                        100%<br/>Medicine intake
+                    <div class="bg-yellow-100 rounded-2xl px-4 py-8 flex items-center gap-4">
+                        <div class="bg-white rounded-xl w-16 h-16 flex items-center justify-center shadow">
+                            <img src="{% static 'main/health.png' %}" alt="Medicine" class="w-10 h-10" />
+                        </div>
+                        <div class="text-left">
+                            <span class="text-2xl font-bold text-yellow-500">100%</span><br/>
+                            <span class="text-base text-yellow-500">Medicine intake</span>
+                        </div>
                     </div>
-                    <div class="bg-green-100 rounded-lg p-4 text-center">
-                        <img src="{% static 'main/food.png' %}" alt="Food" class="w-8 h-8 mx-auto mb-2" />
-                        100%<br/>Nutrition intake
+                    <div class="bg-green-100 rounded-2xl px-4 py-8 flex items-center gap-4">
+                        <div class="bg-white rounded-xl w-16 h-16 flex items-center justify-center shadow">
+                            <img src="{% static 'main/food.png' %}" alt="Food" class="w-10 h-10" />
+                        </div>
+                        <div class="text-left">
+                            <span class="text-2xl font-bold text-green-500">100%</span><br/>
+                            <span class="text-base text-green-500">Nutrition intake</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="mt-8 bg-gray-100 rounded-xl p-8 text-center text-2xl text-gray-400 blur-sm">
+            <div class="mt-8 bg-gray-100 rounded-xl p-8 text-center text-2xl text-gray-400 blur-sm w-full">
                 Upgrade to a monthly premium plan
             </div>
         </main>
