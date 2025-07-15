@@ -3,21 +3,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loop - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen flex items-center justify-center"
       style="background: url('{% static 'main/login-bg.png' %}') no-repeat center center/cover;">
-    <div class="bg-white rounded-[2.5rem] shadow-xl p-12 w-full max-w-md flex flex-col items-center"
+    <div class="bg-white rounded-[2.5rem] shadow-xl p-6 sm:p-12 w-full max-w-xs sm:max-w-md flex flex-col items-center"
          style="box-shadow: 0 8px 24px 0 rgba(0,0,0,0.10);">
         <h1 class="text-4xl font-bold text-blue-500 mb-4 mt-4">Loop</h1>
         <p class="mb-8 text-center text-gray-500">Welcome back! Sign in with your information below.</p>
-        <form class="w-full flex flex-col gap-6">
-            <input type="email" placeholder="Email" class="p-4 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" />
-            <input type="password" placeholder="Password" class="p-4 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" />
-            <button class="bg-gray-100 shadow-lg rounded-xl py-4 text-xl font-semibold mt-4 transition hover:bg-gray-200">Login</button>
+        <form method="post" action="{% url 'login' %}" class="w-full flex flex-col gap-6">
+            {% csrf_token %}
+            <input type="email" name="email" placeholder="Email" class="p-4 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" required />
+            <input type="password" name="password" placeholder="Password" class="p-4 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" required />
+            <button type="submit" class="bg-gray-100 shadow-lg rounded-xl py-4 text-xl font-semibold mt-4 transition hover:bg-gray-200">Login</button>
         </form>
-        <a href="#" class="mt-4 text-gray-500 underline text-sm">Create an account</a>
+        <a href="{% url 'register' %}" class="mt-4 text-gray-500 underline text-sm">Create an account</a>
         <div class="flex items-center justify-center my-4 w-full">
             <hr class="flex-grow border-gray-200" />
             <span class="px-4 text-gray-400 font-bold text-sm">OR</span>
