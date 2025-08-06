@@ -39,7 +39,7 @@
                 <!-- Daily Progress Chart Placeholder -->
                 <div class="bg-white rounded-xl shadow p-6 h-96 flex flex-col items-center justify-center">
                     <h2 class="text-2xl font-medium mb-4">Daily Progress</h2>
-                    <canvas id="progressChart" width="150" height="150"></canvas>
+                    <canvas id="progressChart" class="w-full max-w-xs aspect-square"></canvas>
                 </div>
             </div>
             <div class="mt-8">
@@ -50,7 +50,7 @@
                             <img src="{% static 'main/hygiene.png' %}" alt="Water" class="w-10 h-10" />
                         </div>
                         <div class="text-left">
-                            <span class="text-2xl font-bold text-[#08A6F7]">60%</span><br/>
+                            <span class="text-2xl font-bold text-[#08A6F7]">{{ hygiene_percent }}%</span><br/>
                             <span class="text-base text-[#08A6F7]">More consistent</span>
                         </div>
                     </div>
@@ -59,7 +59,7 @@
                             <img src="{% static 'main/health.png' %}" alt="Medicine" class="w-10 h-10" />
                         </div>
                         <div class="text-left">
-                            <span class="text-2xl font-bold text-yellow-500">100%</span><br/>
+                            <span class="text-2xl font-bold text-yellow-500">{{ health_percent }}%</span><br/>
                             <span class="text-base text-yellow-500">Medicine intake</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@
                             <img src="{% static 'main/food.png' %}" alt="Food" class="w-10 h-10" />
                         </div>
                         <div class="text-left">
-                            <span class="text-2xl font-bold text-green-500">100%</span><br/>
+                            <span class="text-2xl font-bold text-green-500">{{ nutrition_percent }}%</span><br/>
                             <span class="text-base text-green-500">Nutrition intake</span>
                         </div>
                     </div>
@@ -89,6 +89,7 @@
     // Consistency Overview Chart
     const consistencyLabels = JSON.parse(document.getElementById('consistency-labels').textContent);
     const consistencyData = JSON.parse(document.getElementById('consistency-data').textContent);
+
     const ctx1 = document.getElementById('consistencyChart').getContext('2d');
     const consistencyChart = new Chart(ctx1, {
         type: 'bar',
@@ -103,6 +104,8 @@
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: true,
             scales: {
                 y: { beginAtZero: true, max: 100 }
             }
@@ -110,6 +113,7 @@
     });
     // Daily Progress Chart
     const progressValue = {{ progress_value }}; // Esto viene de tu vista de Django
+
     const ctx2 = document.getElementById('progressChart').getContext('2d');
     const progressChart = new Chart(ctx2, {
         type: 'doughnut',
@@ -121,7 +125,9 @@
             }]
         },
         options: {
-            cutout: '80%', // Más delgado y pequeño
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '80%',
             plugins: {
                 legend: { display: false },
                 tooltip: { enabled: false }

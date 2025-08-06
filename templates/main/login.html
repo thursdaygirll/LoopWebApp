@@ -13,6 +13,13 @@
          style="box-shadow: 0 8px 24px 0 rgba(0,0,0,0.10);">
         <h1 class="text-4xl font-bold text-blue-500 mb-4 mt-4">Loop</h1>
         <p class="mb-8 text-center text-gray-500">Welcome back! Sign in with your information below.</p>
+        
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full">
+            {{ error }}
+        </div>
+        {% endif %}
+        
         <form method="post" action="{% url 'login' %}" class="w-full flex flex-col gap-6">
             {% csrf_token %}
             <input type="email" name="email" placeholder="Email" class="p-4 rounded-lg shadow focus:outline-none border border-gray-200 bg-gray-50" required />
@@ -26,9 +33,9 @@
             <hr class="flex-grow border-gray-200" />
         </div>
         <div class="flex items-center justify-center gap-6 mt-4">
-            <button class="flex items-center justify-center w-12 h-12 rounded-full border border-gray-300 bg-white shadow-sm hover:bg-gray-50 transition">
+            <a href="{% url 'google_login' %}" class="flex items-center justify-center w-12 h-12 rounded-full border border-gray-300 bg-white shadow-sm hover:bg-gray-50 transition">
                 <img src="{% static 'main/googleicon.png' %}" alt="Google" class="w-7 h-7" />
-            </button>
+            </a>
         </div>
     </div>
 </body>

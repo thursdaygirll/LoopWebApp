@@ -15,8 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Quick-start development settings - unsuitable for production
@@ -28,11 +26,12 @@ SECRET_KEY = 'django-insecure-tfml99q0uk51o&0#_^a#c8*p9p_5j*=_pr_qj70tqdtm%ixexv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Se ha actualizado ALLOWED_HOSTS para incluir localhost y 127.0.0.1
+# Esto es una buena práctica y es necesario cuando DEBUG es False.
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,6 +40,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'django.contrib.sites',  # Requerido por django-allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',  # Añadir el proveedor de Google
 ]
 
 MIDDLEWARE = [
@@ -48,8 +52,9 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # Mover este middleware antes de allauth
     'django.contrib.messages.middleware.MessageMiddleware',
+    'allauth.account.middleware.AccountMiddleware', # Mover este middleware después de la autenticación
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -125,3 +130,51 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================
+# CONFIGURACIÓN DE DJANGO-ALLAUTH
+# ============================================
+
+# Se necesita un SITE_ID para el framework de sitios de Django
+SITE_ID = 1
+
+# Requerido para iniciar sesión por email o username
+AUTHENTICATION_BACKENDS = (
+    # Necesario para iniciar sesión con el admin de Django
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` métodos de autenticación, como el inicio de sesión por email
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+# Configuración del proveedor de Google
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
+# La URL a la que se redirige después de iniciar sesión con éxito
+LOGIN_REDIRECT_URL = '/dashboard/' # Puedes cambiar esto a la URL que desees
+
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Desactivar verificación de email
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+# El email del remitente para correos de allauth
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# La URL de inicio de sesión
+LOGIN_URL = 'account_login'
+
+# Esto omite la página de confirmación al iniciar sesión por primera vez con una cuenta social
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+SOCIALACCOUNT_AUTO_SIGNUP = True

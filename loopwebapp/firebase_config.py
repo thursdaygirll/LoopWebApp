@@ -1,5 +1,5 @@
 import firebase_admin
-from firebase_admin import credentials, auth, storage
+from firebase_admin import credentials, firestore
 import pyrebase
 
 # Inicializar firebase_admin
@@ -23,5 +23,6 @@ firebase_config = {
 firebase = pyrebase.initialize_app(firebase_config)
 auth_pyrebase = firebase.auth()
 db = firebase.database() 
+firestore_db = firestore.client() 
 
 
