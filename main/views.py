@@ -37,7 +37,9 @@ def login_view(request):
 def dashboard_view(request):
     import datetime
 
-    user_id = request.session['uid']
+    user_id = request.session.get('uid')
+    if not user_id:
+        return redirect('login')
     device_id = "device_001"  # O como lo obtengas
 
     user_habits = db.child("users").child(user_id).child("habits").get().val() or {}
