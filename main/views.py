@@ -27,6 +27,8 @@ def login_view(request):
         try:
             user = auth_pyrebase.sign_in_with_email_and_password(email, password)
             request.session['uid'] = user['localId']
+            # Guardar idToken para autenticación en Realtime Database
+            request.session['idToken'] = user.get('idToken')
             return redirect('dashboard')
         except Exception as e:
             print(f"Error de login: {e}")
@@ -38,23 +40,39 @@ def dashboard_view(request):
     import datetime
 
     user_id = request.session.get('uid')
+    id_token = request.session.get('idToken')
     if not user_id:
+        return redirect('login')
+    if not id_token:
+        # Si no hay idToken, forzar re-login para obtenerlo
         return redirect('login')
     device_id = "device_001"  # O como lo obtengas
 
-    user_habits = db.child("users").child(user_id).child("habits").get().val() or {}
+    user_habits = db.child("users").child(user_id).child("habits").get(id_token).val() or {}
+    # Datos del usuario para saludo y foto
+    user_data = db.child("users").child(user_id).get(id_token).val() or {}
+    display_name = user_data.get("name", "Usuario")
+    photo_url = user_data.get("profile_picture") or "/static/main/profileicon.png"
     print(user_habits)
-    progress = db.child("devices").child(device_id).child("progress").get().val() or {}
+    progress = db.child("devices").child(device_id).child("progress").get(id_token).val() or {}
 
     # Días de la semana
     # Ahora el 0 es domingo, así que ajustamos el orden de los días
     days_order = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     consistency_labels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
+    # Fechas de la semana actual (domingo a sábado)
+    today = datetime.datetime.now()
+    # Calcular el domingo de esta semana
+    # weekday(): Monday=0..Sunday=6, usamos un ajuste para tomar domingo como inicio
+    days_since_sunday = (today.weekday() + 1) % 7
+    start_of_week = today - datetime.timedelta(days=days_since_sunday)
+    week_dates = [start_of_week + datetime.timedelta(days=i) for i in range(7)]
+    day_to_date_str = {d.strftime("%A"): d.strftime("%Y-%m-%d") for d in week_dates}
+
     # 1. Total de hábitos programados por día (por hábito, no por tipo)
-    # Calcula el total de hábitos programados por día según el JSON de user_habits
     total_per_day = {day: 0 for day in days_order}
-    for habit_id, habit in user_habits.items():
+    for habit_id, habit in (user_habits or {}).items():
         for day_num in habit.get("days", []):
             if 0 <= day_num < len(days_order):
                 day_name = days_order[day_num]
@@ -66,86 +84,81 @@ def dashboard_view(request):
     # if completed_today > total_today:
     #     completed_today = total_today
 
-    # 2. Total de hábitos completados por día
-    completed_per_day = {day: 0 for day in days_order}
-    for prog in progress.values():
-        if prog.get("completed") and prog.get("date"):
-            date = datetime.datetime.strptime(prog["date"], "%Y-%m-%d")
-            day_name = date.strftime("%A")
-            # Solo cuenta si el habit_id pertenece al usuario
-            if prog.get("habit_id") in user_habits:
-                completed_per_day[day_name] += 1
+    # 2. Total de hábitos completados por día (único por hábito/día para evitar doble conteo)
+    completed_sets = {day: set() for day in days_order}
+    progress_values = list(progress.values()) if isinstance(progress, dict) else (progress or [])
+    for prog in progress_values:
+        hid = prog.get("habit_id")
+        if prog.get("completed") and prog.get("date") and hid in user_habits:
+            try:
+                date_obj = datetime.datetime.strptime(prog["date"], "%Y-%m-%d")
+                day_name = date_obj.strftime("%A")
+                # Solo contar si es fecha de esta semana exacta
+                if day_to_date_str.get(day_name) == prog["date"]:
+                    completed_sets[day_name].add(hid)
+            except Exception:
+                continue
+    completed_per_day = {day: len(s) for day, s in completed_sets.items()}
 
-    # 3. Consistency data (porcentaje por día)
-    # Calcular el porcentaje de tareas completadas por día correctamente
+    # 3. Consistency data (porcentaje por día de la semana actual)
     consistency_data = []
     for day in days_order:
-        # Para cada día, contar cuántos hábitos del usuario estaban programados para ese día
-        total = 0
-        completed = 0
-        for habit_id, habit in user_habits.items():
-            # Verifica si el hábito está programado para este día
-            if days_order.index(day) in habit.get("days", []):
-                total += 1
-                # Buscar si hay progreso completado para este hábito en este día
-                for prog in progress.values():
-                    if (
-                        prog.get("habit_id") == habit_id
-                        and prog.get("completed")
-                        and prog.get("date")
-                    ):
-                        # Revisar si la fecha corresponde al día de la semana actual
-                        try:
-                            prog_date = datetime.datetime.strptime(prog["date"], "%Y-%m-%d")
-                            if prog_date.strftime("%A") == day:
-                                completed += 1
-                                break  # Solo contar una vez por hábito por día
-                        except Exception:
-                            continue
-        
+        total = total_per_day.get(day, 0)
+        completed = completed_per_day.get(day, 0)
         percent = int((completed / total) * 100) if total > 0 else 0
         consistency_data.append(percent)
 
     # 4. Para hoy
-    today_weekday = datetime.datetime.now().strftime("%A")
-    today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    today_weekday = today.strftime("%A")
+    today_date = today.strftime("%Y-%m-%d")
 
     # Total de hábitos programados para hoy
-    total_today = total_per_day[today_weekday]
+    total_today = total_per_day.get(today_weekday, 0)
 
     # Total de hábitos completados hoy
-    completed_today = 0
-    for prog in progress.values():
-        if prog.get("completed") and prog.get("date") == today_date:
-            if prog.get("habit_id") in user_habits:
-                completed_today += 1
+    completed_today = completed_per_day.get(today_weekday, 0)
 
     # Progreso diario en porcentaje
     # Usamos round() para asegurar que 3/4 da 75 y no 74
     progress_value = int((completed_today / total_today) * 100) if total_today > 0 else 0
     
-    # --- Analytics Overview ---
-    # Por tipo: higiene, salud, nutricion
-    month = datetime.datetime.now().strftime("%Y-%m")
-    type_totals = {"higiene": 0, "salud": 0, "nutricion": 0}
-    type_completed = {"higiene": 0, "salud": 0, "nutricion": 0}
+    # --- Analytics Overview (por semana: % completado vs programado por tipo) ---
+    # Para cada tipo (higiene/salud/nutricion), calcular:
+    #   porcentaje = (# completados únicos esta semana del tipo) / (# ocurrencias programadas en la semana del tipo) * 100
+    types = ["higiene", "salud", "nutricion"]
+    week_dates_set = set(day_to_date_str.values())
 
-    for habit_id, habit in user_habits.items():
+    # Ocurrencias programadas por semana (número de días marcados por hábito) por tipo
+    type_scheduled_week = {t: 0 for t in types}
+    for habit_id, habit in (user_habits or {}).items():
         tipo = habit.get("type")
-        if tipo in type_totals:
-            type_totals[tipo] += 1
+        if tipo in type_scheduled_week:
+            occurrences = sum(1 for d in habit.get("days", []) if 0 <= d < 7)
+            type_scheduled_week[tipo] += occurrences
 
-    # Calcular el progreso diario viendo cuántas tareas del día se han completado
-    for prog in progress.values():
-        if prog.get("completed") and prog.get("date") == today_date:
-            habit_id = prog.get("habit_id")
-            tipo = user_habits.get(habit_id, {}).get("type")
-            if tipo in type_completed:
-                type_completed[tipo] += 1
+    # Completados únicos por (habit_id, date) dentro de la semana por tipo
+    type_completed_pairs = {t: set() for t in types}
+    for prog in progress_values:
+        if not (prog.get("completed") and prog.get("date") in week_dates_set):
+            continue
+        hid = prog.get("habit_id")
+        if not hid or hid not in (user_habits or {}):
+            continue
+        tipo = (user_habits or {}).get(hid, {}).get("type")
+        if tipo in type_completed_pairs:
+            pair = (hid, prog.get("date"))
+            type_completed_pairs[tipo].add(pair)
 
-    hygiene_percent = int((type_completed["higiene"] / type_totals["higiene"]) * 100) if type_totals["higiene"] > 0 else 0
-    health_percent = int((type_completed["salud"] / type_totals["salud"]) * 100) if type_totals["salud"] > 0 else 0
-    nutrition_percent = int((type_completed["nutricion"] / type_totals["nutricion"]) * 100) if type_totals["nutricion"] > 0 else 0
+    type_completed_week = {t: len(type_completed_pairs[t]) for t in types}
+
+    def pct(comp, sched):
+        if sched <= 0:
+            return 0
+        return int(round((comp / sched) * 100))
+
+    hygiene_percent = pct(type_completed_week["higiene"], type_scheduled_week["higiene"])
+    health_percent = pct(type_completed_week["salud"], type_scheduled_week["salud"])
+    nutrition_percent = pct(type_completed_week["nutricion"], type_scheduled_week["nutricion"])
 
     print(hygiene_percent)
     print(health_percent)
@@ -171,25 +184,28 @@ def dashboard_view(request):
         'hygiene_percent': hygiene_percent,
         'health_percent': health_percent,
         'nutrition_percent': nutrition_percent,
+        'name': display_name,
+        'photo_url': photo_url,
     })
 
 
 def profile_view(request):
     user_id = request.session.get('uid')
+    id_token = request.session.get('idToken')
     if not user_id:
         return redirect('login')
 
     try:
-        user_data = db.child("users").child(user_id).get().val()
+        user_data = db.child("users").child(user_id).get(id_token).val()
         name = user_data.get("name", "Usuario")
         email = user_data.get("email", "correo@dominio.com")
-        photo_url = user_data.get("profile_picture", "/static/images/default_profile.png")
+        photo_url = user_data.get("profile_picture", "/static/main/profileicon.png")
         
     except Exception as e:
         print("Error al obtener datos del perfil:", e)
         name = "Usuario"
         email = "correo@dominio.com"
-        photo_url = "/static/images/default_profile.png"
+        photo_url = "/static/main/profileicon.png"
 
     return render(request, 'main/profile.html', {
         'photo_url': photo_url,
@@ -225,8 +241,9 @@ def register_view(request):
                 email = request.POST.get('email')
                 password = request.POST.get('password')
                 try:
-                    user = auth_pyrebase.sign_in_with_email_and_password(email, password)
-                    request.session['uid'] = user['localId']
+                    signed_in = auth_pyrebase.sign_in_with_email_and_password(email, password)
+                    request.session['uid'] = signed_in['localId']
+                    request.session['idToken'] = signed_in.get('idToken')
                     return redirect('dashboard')
                 except Exception as e:
                     print(f"Error de login: {e}")
@@ -391,28 +408,29 @@ def google_callback(request):
             # Intentar obtener el usuario existente por email
             user = auth_pyrebase.sign_in_with_email_and_password(email, "google_user_temp_password")
         except:
-            # Si no existe, crear un nuevo usuario
+            # Si no existe, crear un nuevo usuario y luego iniciar sesión para obtener idToken
             try:
-                # Crear usuario con contraseña temporal
-                user = auth_pyrebase.create_user_with_email_and_password(email, "google_user_temp_password")
-                uid = user['localId']
-                
-                # Guardar información adicional en Firebase Database
+                created = auth_pyrebase.create_user_with_email_and_password(email, "google_user_temp_password")
+                uid = created['localId']
+                # Iniciar sesión para obtener idToken
+                user = auth_pyrebase.sign_in_with_email_and_password(email, "google_user_temp_password")
+                id_token = user.get('idToken')
+                # Guardar información adicional en Firebase Database (autenticado)
                 db.child("users").child(uid).set({
                     "name": name,
                     "email": email,
                     "profile_picture": picture,
                     "google_id": google_user_id,
                     "auth_provider": "google",
-                    "avatar_id": "avatar1"  # Avatar por defecto
-                })
-                
+                    "avatar_id": "avatar1"
+                }, id_token)
             except Exception as e:
                 print(f"Error creando usuario: {e}")
                 return render(request, 'main/login.html', {'error': 'Error al crear usuario con Google'})
-        
-        # Guardar el UID en la sesión
+
+        # Guardar el UID e idToken en la sesión
         request.session['uid'] = user['localId']
+        request.session['idToken'] = user.get('idToken')
         
         # Limpiar el estado de OAuth
         if 'oauth_state' in request.session:
@@ -429,6 +447,8 @@ def logout_view(request):
     """Cerrar sesión"""
     if 'uid' in request.session:
         del request.session['uid']
+    if 'idToken' in request.session:
+        del request.session['idToken']
     return redirect('login')
 
 
