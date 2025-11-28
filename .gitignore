@@ -7,3 +7,8 @@ db.sqlite3
 .DS_Store
 staticfiles/
 .vscode/
+.env
+loopwebapp/google_oauth_config.py
+env/
+*.json
+!loopwebapp/google_oauth_config.py.example
